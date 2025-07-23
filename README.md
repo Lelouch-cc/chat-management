@@ -1,36 +1,212 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Jobbit 后台管理系统
 
-## Getting Started
+基于 Next.js 15 开发的现代化后台管理系统，集成职位管理和团队协作功能，为企业提供完整的招聘管理解决方案。
 
-First, run the development server:
+## 🚀 功能特性
+
+### 📊 **数据统计面板**
+
+- 实时数据概览，包含职位数量、申请统计、团队消息等关键指标
+- 可视化图表展示招聘进展和团队活跃度
+- 快捷操作入口，一键访问常用功能
+- 最近活动时间线，实时跟踪系统动态
+
+### 💼 **职位管理系统**
+
+- **职位发布**：创建和发布新的职位招聘信息
+- **状态管理**：支持招聘中、暂停、关闭等状态切换
+- **申请跟踪**：实时统计每个职位的申请人数
+- **搜索筛选**：按职位标题、公司名称、状态等条件筛选
+- **批量操作**：支持批量修改职位状态和信息
+
+### 💬 **团队聊天系统**
+
+- **实时通讯**：团队成员间即时消息交流
+- **在线状态**：显示成员在线状态和最后活跃时间
+- **文件分享**：支持文件、图片等多媒体内容发送
+- **语音视频**：集成语音和视频通话功能（开发中）
+- **@提及功能**：支持@特定成员进行重要通知
+
+### 👥 **用户管理** (规划中)
+
+- 团队成员管理和权限控制
+- 角色分配和访问权限设置
+- 用户活动日志和行为分析
+
+### ⚙️ **系统设置** (规划中)
+
+- 系统配置和个性化设置
+- 通知偏好和提醒设置
+- 数据导入导出功能
+
+## 🛠 技术栈
+
+- **前端框架**：Next.js 15 (App Router)
+- **开发语言**：TypeScript
+- **样式方案**：Tailwind CSS 4
+- **UI 组件**：React 19
+- **状态管理**：React Hooks + Local Storage
+- **代码规范**：ESLint
+- **响应式设计**：完全适配桌面端和移动端
+
+## 🏗 项目结构
+
+```
+jobbit-chat/
+├── src/
+│   └── app/
+│       ├── login/              # 登录页面
+│       ├── dashboard/          # 管理后台主模块
+│       │   ├── layout.tsx      # 后台布局（侧边栏+导航）
+│       │   ├── page.tsx        # 数据统计面板
+│       │   ├── jobs/           # 职位管理
+│       │   ├── chat/           # 团队聊天
+│       │   ├── users/          # 用户管理 (规划中)
+│       │   └── settings/       # 系统设置 (规划中)
+│       ├── layout.tsx          # 根布局
+│       └── page.tsx            # 路由守卫
+├── public/                     # 静态资源
+└── README.md                   # 项目说明
+```
+
+## 🚦 快速开始
+
+### 环境要求
+
+- Node.js 18+
+- npm 或 yarn
+
+### 安装依赖
+
+```bash
+npm install
+# 或
+yarn install
+```
+
+### 启动开发服务器
 
 ```bash
 npm run dev
-# or
+# 或
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+访问 [http://localhost:3000](http://localhost:3000) 体验系统。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📱 页面路由
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 智能路由系统
 
-## Learn More
+- **根页面** (`/`) - 智能路由守卫
+  - 未登录 → 自动跳转到 `/login`
+  - 已登录 → 自动跳转到 `/dashboard`
 
-To learn more about Next.js, take a look at the following resources:
+### 管理后台模块
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **登录页面** (`/login`) - 管理员登录界面
+- **数据面板** (`/dashboard`) - 系统概览和快捷操作
+- **职位管理** (`/dashboard/jobs`) - 职位发布和管理
+- **团队聊天** (`/dashboard/chat`) - 内部通讯系统
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🎯 使用指南
 
-## Deploy on Vercel
+### 初次登录
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. 访问系统根页面，自动跳转到登录界面
+2. 输入管理员账号和密码（演示环境：任意 6 位以上密码）
+3. 登录成功后进入管理后台主面板
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 职位管理工作流
+
+1. **查看统计** → 在数据面板查看职位和申请概况
+2. **发布职位** → 点击"发布新职位"创建招聘信息
+3. **管理申请** → 实时跟踪每个职位的申请情况
+4. **状态更新** → 根据招聘进展调整职位状态
+5. **数据分析** → 利用统计数据优化招聘策略
+
+### 团队协作流程
+
+1. **查看成员** → 左侧面板显示所有团队成员在线状态
+2. **发起对话** → 选择成员开始一对一或群组聊天
+3. **文件分享** → 使用附件功能分享工作文档
+4. **快速通知** → 使用@功能重要消息提醒
+
+## 🎨 界面设计
+
+### 响应式适配
+
+- **桌面端**：经典的管理后台布局，侧边栏+主内容区域
+- **平板端**：自适应布局，保持完整功能体验
+- **移动端**：侧边栏折叠设计，滑动菜单操作
+
+### 视觉设计原则
+
+- **简洁现代**：采用简洁的设计语言，突出内容重点
+- **一致性**：统一的颜色、字体、间距和交互模式
+- **易用性**：直观的操作流程和清晰的信息层级
+- **可访问性**：良好的对比度和键盘导航支持
+
+## 🔧 开发规范
+
+### 代码质量
+
+- 使用 TypeScript 进行严格类型检查
+- 遵循 ESLint 代码规范和最佳实践
+- 组件化开发，提高代码复用性
+- 详细的代码注释和函数文档
+
+### 性能优化
+
+- Next.js 15 静态生成和服务端渲染
+- 组件懒加载和代码分割
+- 图片优化和资源压缩
+- 缓存策略和数据预加载
+
+## 🚀 部署构建
+
+```bash
+# 构建生产版本
+npm run build
+
+# 启动生产服务器
+npm run start
+
+# 代码检查
+npm run lint
+```
+
+## 🤝 贡献指南
+
+我们欢迎任何形式的贡献，包括但不限于：
+
+1. **功能建议** - 提交 Issue 描述新功能需求
+2. **Bug 报告** - 详细描述问题重现步骤
+3. **代码贡献** - Fork 项目，提交 Pull Request
+4. **文档完善** - 改进文档和使用说明
+5. **测试用例** - 编写单元测试和集成测试
+
+### 开发流程
+
+1. Fork 本项目到个人仓库
+2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 创建 Pull Request
+
+## 📄 开源协议
+
+本项目采用 MIT 协议开源，详见 [LICENSE](LICENSE) 文件。
+
+## 🙋‍♂️ 技术支持
+
+如果您在使用过程中遇到问题，可以通过以下方式获取帮助：
+
+- 📧 邮件支持：support@jobbit.com
+- 💬 在线客服：访问官网获取实时帮助
+- 📚 技术文档：查看详细的 API 文档和开发指南
+- 🐛 问题反馈：在 GitHub Issues 中提交问题
+
+---
+
+**Jobbit 后台管理系统** - 让招聘管理更简单，让团队协作更高效！
