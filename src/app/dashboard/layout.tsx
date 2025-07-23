@@ -1,49 +1,132 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { User, PermissionModule, PermissionAction, hasPermission, getRoleText } from "@/types/user";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
+	const [currentUser, setCurrentUser] = useState<User | null>(null);
 	const pathname = usePathname();
 	const router = useRouter();
 
 	/**
-	 * 导航菜单配置
+	 * 获取当前用户信息
 	 */
-	const navigation = [
-		{
-			name: "数据统计",
-			href: "/dashboard",
-			icon: "📊",
-			current: pathname === "/dashboard",
-		},
-		{
-			name: "职位管理",
-			href: "/dashboard/jobs",
-			icon: "💼",
-			current: pathname === "/dashboard/jobs",
-		},
-		{
-			name: "申请者沟通",
-			href: "/dashboard/chat",
-			icon: "💬",
-			current: pathname === "/dashboard/chat",
-		},
-		{
-			name: "用户管理",
-			href: "/dashboard/users",
-			icon: "👥",
-			current: pathname === "/dashboard/users",
-		},
-		{
-			name: "系统设置",
-			href: "/dashboard/settings",
-			icon: "⚙️",
-			current: pathname === "/dashboard/settings",
-		},
-	];
+	useEffect(() => {
+		try {
+			const userStr = localStorage.getItem("user");
+			if (userStr) {
+				const user = JSON.parse(userStr) as User;
+				// 验证用户数据完整性
+				if (user && user.id && user.username && user.nickname) {
+					setCurrentUser(user);
+				} else {
+					console.error("用户数据不完整:", user);
+					// 清理无效数据
+					localStorage.removeItem("isLoggedIn");
+					localStorage.removeItem("user");
+					localStorage.removeItem("userPermissions");
+					router.push("/login");
+				}
+			}
+		} catch (error) {
+			console.error("获取用户信息失败:", error);
+			// 如果用户信息损坏，清理并重定向到登录页
+			localStorage.removeItem("isLoggedIn");
+			localStorage.removeItem("user");
+			localStorage.removeItem("userPermissions");
+			router.push("/login");
+		}
+	}, [router]);
+
+	// 检查用户权限的辅助函数
+	const canAccess = (module: PermissionModule, action: PermissionAction = PermissionAction.READ): boolean => {
+		if (!currentUser || !currentUser.permissions) {
+			return false;
+		}
+		return hasPermission(currentUser.permissions, module, action);
+	};
+
+	// 安全获取用户头像或首字母
+	const getUserAvatar = (user: User | null): string => {
+		if (!user) return "👤";
+
+		// 如果有头像且不是复合emoji，直接使用
+		if (user.avatar && user.avatar.length <= 2) {
+			return user.avatar;
+		}
+
+		// 根据性别和角色生成默认头像
+		if (user.role === "super_admin") return "🔧";
+		if (user.gender === 1) return "👨"; // 男性
+		if (user.gender === 2) return "��"; // 女性
+
+		// 最后降级：使用昵称或用户名首字母
+		if (user.nickname && user.nickname.length > 0) {
+			return user.nickname.charAt(0).toUpperCase();
+		}
+		if (user.username && user.username.length > 0) {
+			return user.username.charAt(0).toUpperCase();
+		}
+
+		return "👤";
+	};
+
+	// 安全获取用户昵称
+	const getUserDisplayName = (user: User | null): string => {
+		if (!user) return "用户";
+		return user.nickname || user.username || "用户";
+	};
+
+	/**
+	 * 导航菜单配置（基于权限过滤）
+	 */
+	const getNavigation = () => {
+		const allNavItems = [
+			{
+				name: "数据统计",
+				href: "/dashboard",
+				icon: "📊",
+				current: pathname === "/dashboard",
+				module: PermissionModule.DASHBOARD,
+			},
+			{
+				name: "职位管理",
+				href: "/dashboard/jobs",
+				icon: "💼",
+				current: pathname === "/dashboard/jobs",
+				module: PermissionModule.JOBS,
+			},
+			{
+				name: "申请者沟通",
+				href: "/dashboard/chat",
+				icon: "💬",
+				current: pathname === "/dashboard/chat",
+				module: PermissionModule.CHAT,
+			},
+			{
+				name: "用户管理",
+				href: "/dashboard/users",
+				icon: "👥",
+				current: pathname === "/dashboard/users",
+				module: PermissionModule.USERS,
+			},
+			{
+				name: "系统设置",
+				href: "/dashboard/settings",
+				icon: "⚙️",
+				current: pathname === "/dashboard/settings",
+				module: PermissionModule.SETTINGS,
+			},
+		];
+
+		// 根据用户权限过滤导航项
+		return allNavItems.filter((item) => canAccess(item.module));
+	};
+
+	const navigation = getNavigation();
 
 	/**
 	 * 退出登录
@@ -51,6 +134,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 	const handleLogout = () => {
 		localStorage.removeItem("isLoggedIn");
 		localStorage.removeItem("user");
+		localStorage.removeItem("userPermissions");
 		router.push("/login");
 	};
 
@@ -119,13 +203,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 					{/* 用户信息和退出按钮 */}
 					<div className='p-4 border-t border-gray-200'>
-						<div className='flex items-center space-x-3 mb-3'>
-							<div className='w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-semibold'>管</div>
-							<div className='flex-1 min-w-0'>
-								<p className='text-sm font-medium text-gray-900 truncate'>管理员</p>
-								<p className='text-xs text-gray-500'>在线</p>
+						{currentUser && (
+							<div className='flex items-center space-x-3 mb-3'>
+								<div className='w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-semibold'>
+									{getUserAvatar(currentUser)}
+								</div>
+								<div className='flex-1 min-w-0'>
+									<p className='text-sm font-medium text-gray-900 truncate'>{getUserDisplayName(currentUser)}</p>
+									<p className='text-xs text-gray-500'>
+										{currentUser.role ? getRoleText(currentUser.role) : "未知角色"} • #{currentUser.handle || "0000"}
+									</p>
+								</div>
 							</div>
-						</div>
+						)}
 						<button
 							onClick={handleLogout}
 							className='w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors'
@@ -167,6 +257,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 					{/* 右侧操作区域 */}
 					<div className='flex items-center space-x-4'>
+						{/* 用户信息 */}
+						{currentUser && (
+							<div className='hidden sm:flex items-center space-x-3'>
+								<div className='text-sm text-gray-600'>欢迎，{getUserDisplayName(currentUser)}</div>
+								<div className='w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm'>
+									{getUserAvatar(currentUser)}
+								</div>
+							</div>
+						)}
+
+						{/* 日期显示 */}
 						<div className='text-sm text-gray-600'>
 							{new Date().toLocaleDateString("zh-CN", {
 								year: "numeric",

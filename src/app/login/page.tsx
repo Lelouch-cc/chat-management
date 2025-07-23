@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { User, UserRole, UserStatus, Gender, ROLE_PERMISSIONS, PermissionModule, PermissionAction } from "@/types/user";
 
 export default function LoginPage() {
 	const [username, setUsername] = useState("");
@@ -10,9 +11,110 @@ export default function LoginPage() {
 	const [error, setError] = useState("");
 	const router = useRouter();
 
+	// 模拟用户数据库（实际项目中这些数据应该在后端）
+	const mockUsers: User[] = [
+		{
+			id: 1,
+			username: "admin",
+			nickname: "系统管理员",
+			handle: 10001,
+			gender: Gender.MALE,
+			birthday: "1990-01-01",
+			email: "admin@jobbit.com",
+			phone: "13800138000",
+			avatar: "🔧",
+			role: UserRole.SUPER_ADMIN,
+			permissions: ROLE_PERMISSIONS[UserRole.SUPER_ADMIN],
+			status: UserStatus.ACTIVE,
+			createdAt: "2024-01-01T00:00:00Z",
+			updatedAt: "2024-01-15T12:00:00Z",
+			lastLoginAt: "2024-01-15T10:30:00Z",
+		},
+		{
+			id: 2,
+			username: "hr_manager",
+			nickname: "张经理",
+			handle: 10002,
+			gender: Gender.FEMALE,
+			birthday: "1985-06-15",
+			email: "zhang@jobbit.com",
+			phone: "13800138001",
+			avatar: "👩",
+			role: UserRole.HR_MANAGER,
+			permissions: ROLE_PERMISSIONS[UserRole.HR_MANAGER],
+			status: UserStatus.ACTIVE,
+			createdAt: "2024-01-02T00:00:00Z",
+			updatedAt: "2024-01-15T11:00:00Z",
+			lastLoginAt: "2024-01-15T09:45:00Z",
+		},
+		{
+			id: 3,
+			username: "hr_staff_001",
+			nickname: "李专员",
+			handle: 10003,
+			gender: Gender.MALE,
+			birthday: "1992-03-20",
+			email: "li@jobbit.com",
+			phone: "13800138002",
+			avatar: "👨",
+			role: UserRole.HR_SPECIALIST,
+			permissions: ROLE_PERMISSIONS[UserRole.HR_SPECIALIST],
+			status: UserStatus.ACTIVE,
+			createdAt: "2024-01-03T00:00:00Z",
+			updatedAt: "2024-01-15T08:30:00Z",
+			lastLoginAt: "2024-01-15T08:15:00Z",
+		},
+		{
+			id: 4,
+			username: "viewer_001",
+			nickname: "王查看员",
+			handle: 10004,
+			gender: Gender.FEMALE,
+			birthday: "1995-12-10",
+			email: "wang@jobbit.com",
+			avatar: "👩",
+			role: UserRole.VIEWER,
+			permissions: ROLE_PERMISSIONS[UserRole.VIEWER],
+			status: UserStatus.INACTIVE,
+			createdAt: "2024-01-04T00:00:00Z",
+			updatedAt: "2024-01-10T15:20:00Z",
+		},
+	];
+
+	/**
+	 * 用户认证函数
+	 */
+	const authenticateUser = (username: string, password: string): User | null => {
+		// 查找用户
+		const user = mockUsers.find((u) => u.username === username);
+
+		if (!user) {
+			return null;
+		}
+
+		// 检查用户状态
+		if (user.status !== UserStatus.ACTIVE) {
+			throw new Error("账号已被禁用，请联系管理员");
+		}
+
+		// 验证密码（实际项目中应该使用哈希验证）
+		// 这里为了演示，任何6位以上的密码都可以登录
+		if (!password || password.length < 6) {
+			throw new Error("密码不正确");
+		}
+
+		// 更新最后登录时间
+		const updatedUser = {
+			...user,
+			lastLoginAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+		};
+
+		return updatedUser;
+	};
+
 	/**
 	 * 处理表单提交
-	 * 验证用户输入并执行登录逻辑
 	 */
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -27,16 +129,21 @@ export default function LoginPage() {
 			if (!password.trim()) {
 				throw new Error("请输入密码");
 			}
-			if (password.length < 6) {
-				throw new Error("密码长度至少6位");
-			}
 
-			// 模拟登录请求（实际项目中这里会调用API）
+			// 模拟登录请求延迟
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 
+			// 用户认证
+			const authenticatedUser = authenticateUser(username.trim(), password);
+
+			if (!authenticatedUser) {
+				throw new Error("用户名不存在");
+			}
+
 			// 保存用户信息到本地存储
-			localStorage.setItem("user", JSON.stringify({ username }));
+			localStorage.setItem("user", JSON.stringify(authenticatedUser));
 			localStorage.setItem("isLoggedIn", "true");
+			localStorage.setItem("userPermissions", JSON.stringify(authenticatedUser.permissions));
 
 			// 登录成功，跳转到管理后台主页
 			router.push("/dashboard");
@@ -76,7 +183,7 @@ export default function LoginPage() {
 							htmlFor='username'
 							className='block text-sm font-medium text-gray-700 mb-2'
 						>
-							管理员账号
+							用户名
 						</label>
 						<input
 							id='username'
@@ -84,7 +191,7 @@ export default function LoginPage() {
 							value={username}
 							onChange={(e) => setUsername(e.target.value)}
 							className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-200 text-gray-900 placeholder-gray-500'
-							placeholder='请输入管理员账号'
+							placeholder='请输入用户名'
 							disabled={isLoading}
 						/>
 					</div>
@@ -145,7 +252,24 @@ export default function LoginPage() {
 
 				{/* 底部提示 */}
 				<div className='mt-8 text-center'>
-					<p className='text-sm text-gray-500'>演示账号：输入任意用户名和密码（6位以上）即可登录</p>
+					<div className='text-sm text-gray-500 mb-4'>
+						<p className='font-medium mb-2'>演示账号：</p>
+						<div className='space-y-1 text-xs'>
+							<p>
+								<span className='font-mono bg-gray-100 px-2 py-1 rounded'>admin</span> - 超级管理员
+							</p>
+							<p>
+								<span className='font-mono bg-gray-100 px-2 py-1 rounded'>hr_manager</span> - HR经理
+							</p>
+							<p>
+								<span className='font-mono bg-gray-100 px-2 py-1 rounded'>hr_staff_001</span> - HR专员
+							</p>
+							<p>
+								<span className='font-mono bg-gray-100 px-2 py-1 rounded'>viewer_001</span> - 只读用户
+							</p>
+						</div>
+						<p className='mt-3 text-gray-400'>密码：任意6位以上字符</p>
+					</div>
 				</div>
 			</div>
 		</div>
