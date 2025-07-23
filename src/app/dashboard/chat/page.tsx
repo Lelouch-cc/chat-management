@@ -3,13 +3,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-// 用户类型定义
-interface User {
+// 申请者类型定义
+interface Applicant {
 	id: number;
 	name: string;
 	avatar: string;
 	isOnline: boolean;
 	lastSeen?: string;
+	appliedPosition: string;
+	applicationDate: string;
+	status: "pending" | "interviewing" | "rejected" | "hired";
 }
 
 // 消息类型定义
@@ -24,46 +27,61 @@ interface Message {
 
 export default function ChatPage() {
 	const [currentUser, setCurrentUser] = useState<{ username: string } | null>(null);
-	const [selectedUser, setSelectedUser] = useState<User | null>(null);
+	const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [newMessage, setNewMessage] = useState("");
-	const [showUserList, setShowUserList] = useState(false); // 移动端用户列表显示状态
+	const [showApplicantList, setShowApplicantList] = useState(false); // 移动端申请者列表显示状态
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const router = useRouter();
 
-	// 模拟用户列表数据
-	const [users] = useState<User[]>([
+	// 模拟申请者列表数据
+	const [applicants] = useState<Applicant[]>([
 		{
 			id: 1,
-			name: "张三",
+			name: "张小明",
 			avatar: "👨‍💻",
 			isOnline: true,
+			appliedPosition: "高级前端工程师",
+			applicationDate: "2024-01-15",
+			status: "interviewing",
 		},
 		{
 			id: 2,
-			name: "李四",
+			name: "李美丽",
 			avatar: "👩‍🎨",
 			isOnline: true,
+			appliedPosition: "UI/UX 设计师",
+			applicationDate: "2024-01-14",
+			status: "pending",
 		},
 		{
 			id: 3,
-			name: "王五",
+			name: "王建国",
 			avatar: "👨‍🔬",
 			isOnline: false,
-			lastSeen: "5分钟前",
+			lastSeen: "2小时前",
+			appliedPosition: "Java 后端工程师",
+			applicationDate: "2024-01-13",
+			status: "pending",
 		},
 		{
 			id: 4,
-			name: "赵六",
+			name: "刘晓红",
 			avatar: "👩‍💼",
 			isOnline: true,
+			appliedPosition: "产品经理",
+			applicationDate: "2024-01-12",
+			status: "interviewing",
 		},
 		{
 			id: 5,
-			name: "钱七",
+			name: "陈志强",
 			avatar: "👨‍🎓",
 			isOnline: false,
-			lastSeen: "1小时前",
+			lastSeen: "1天前",
+			appliedPosition: "高级前端工程师",
+			applicationDate: "2024-01-10",
+			status: "pending",
 		},
 	]);
 
@@ -90,18 +108,18 @@ export default function ChatPage() {
 	}, [messages]);
 
 	/**
-	 * 选择聊天用户
+	 * 选择申请者开始聊天
 	 */
-	const handleSelectUser = (user: User) => {
-		setSelectedUser(user);
-		setShowUserList(false); // 选择用户后隐藏用户列表（移动端）
-		// 模拟加载该用户的历史消息
+	const handleSelectApplicant = (applicant: Applicant) => {
+		setSelectedApplicant(applicant);
+		setShowApplicantList(false); // 选择申请者后隐藏列表（移动端）
+		// 模拟加载该申请者的历史消息
 		const mockMessages: Message[] = [
 			{
 				id: 1,
-				senderId: user.id,
-				senderName: user.name,
-				content: `你好！我是${user.name}`,
+				senderId: applicant.id,
+				senderName: applicant.name,
+				content: `您好！我是${applicant.name}，很高兴能申请贵公司的${applicant.appliedPosition}职位。`,
 				timestamp: "10:30",
 				isMe: false,
 			},
@@ -109,7 +127,7 @@ export default function ChatPage() {
 				id: 2,
 				senderId: 0,
 				senderName: currentUser?.username || "",
-				content: "你好！很高兴认识你",
+				content: "您好！感谢您的申请，我们已经收到了您的简历，请问您方便聊聊您的工作经验吗？",
 				timestamp: "10:32",
 				isMe: true,
 			},
@@ -122,7 +140,7 @@ export default function ChatPage() {
 	 */
 	const handleSendMessage = (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!newMessage.trim() || !selectedUser || !currentUser) return;
+		if (!newMessage.trim() || !selectedApplicant || !currentUser) return;
 
 		const message: Message = {
 			id: messages.length + 1,
@@ -139,13 +157,13 @@ export default function ChatPage() {
 		setMessages((prev) => [...prev, message]);
 		setNewMessage("");
 
-		// 模拟对方回复（延迟1-2秒）
+		// 模拟申请者回复（延迟1-2秒）
 		setTimeout(() => {
 			const replyMessage: Message = {
 				id: messages.length + 2,
-				senderId: selectedUser.id,
-				senderName: selectedUser.name,
-				content: `收到你的消息："${message.content}"`,
+				senderId: selectedApplicant.id,
+				senderName: selectedApplicant.name,
+				content: `收到您的消息："${message.content}"，我会认真考虑并回复您。`,
 				timestamp: new Date().toLocaleTimeString("zh-CN", {
 					hour: "2-digit",
 					minute: "2-digit",
@@ -156,33 +174,71 @@ export default function ChatPage() {
 		}, Math.random() * 1000 + 1000);
 	};
 
+	/**
+	 * 获取申请状态样式
+	 */
+	const getStatusStyle = (status: string) => {
+		switch (status) {
+			case "pending":
+				return "bg-yellow-100 text-yellow-800";
+			case "interviewing":
+				return "bg-blue-100 text-blue-800";
+			case "rejected":
+				return "bg-red-100 text-red-800";
+			case "hired":
+				return "bg-green-100 text-green-800";
+			default:
+				return "bg-gray-100 text-gray-800";
+		}
+	};
+
+	/**
+	 * 获取申请状态文本
+	 */
+	const getStatusText = (status: string) => {
+		switch (status) {
+			case "pending":
+				return "待处理";
+			case "interviewing":
+				return "面试中";
+			case "rejected":
+				return "已拒绝";
+			case "hired":
+				return "已录用";
+			default:
+				return "未知";
+		}
+	};
+
 	return (
 		<div className='h-full flex bg-white relative'>
 			{/* 移动端遮罩层 */}
-			{showUserList && (
+			{showApplicantList && (
 				<div
 					className='fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden'
-					onClick={() => setShowUserList(false)}
+					onClick={() => setShowApplicantList(false)}
 				/>
 			)}
 
-			{/* 左侧用户列表 */}
+			{/* 左侧申请者列表 */}
 			<div
 				className={`w-80 bg-gray-50 border-r border-gray-200 flex flex-col transition-transform duration-300 ease-in-out z-50 ${
-					showUserList ? "fixed inset-y-0 left-0 translate-x-0" : "fixed inset-y-0 left-0 -translate-x-full lg:relative lg:translate-x-0"
+					showApplicantList
+						? "fixed inset-y-0 left-0 translate-x-0"
+						: "fixed inset-y-0 left-0 -translate-x-full lg:relative lg:translate-x-0"
 				}`}
 			>
-				{/* 用户列表头部 */}
+				{/* 申请者列表头部 */}
 				<div className='p-4 bg-white border-b border-gray-200'>
 					<div className='flex items-center justify-between'>
 						<div className='flex-1'>
-							<h3 className='font-semibold text-gray-900'>团队成员</h3>
-							<p className='text-sm text-gray-500'>选择成员开始聊天</p>
+							<h3 className='font-semibold text-gray-900'>职位申请者</h3>
+							<p className='text-sm text-gray-500'>选择申请者开始沟通</p>
 						</div>
 						{/* 移动端关闭按钮 */}
 						<button
-							onClick={() => setShowUserList(false)}
-							className='lg:hidden p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600'
+							onClick={() => setShowApplicantList(false)}
+							className='lg:hidden p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-800 transition-colors'
 						>
 							<svg
 								className='w-5 h-5'
@@ -201,40 +257,46 @@ export default function ChatPage() {
 					</div>
 				</div>
 
-				{/* 在线状态统计 */}
+				{/* 申请统计 */}
 				<div className='p-4 bg-white border-b border-gray-200'>
 					<div className='flex items-center justify-between text-sm'>
-						<span className='text-gray-600'>在线成员</span>
+						<span className='text-gray-600'>在线申请者</span>
 						<span className='text-green-600 font-medium'>
-							{users.filter((user) => user.isOnline).length}/{users.length}
+							{applicants.filter((applicant) => applicant.isOnline).length}/{applicants.length}
 						</span>
 					</div>
 				</div>
 
-				{/* 用户列表 */}
+				{/* 申请者列表 */}
 				<div className='flex-1 overflow-y-auto'>
-					{users.map((user) => (
+					{applicants.map((applicant) => (
 						<div
-							key={user.id}
-							onClick={() => handleSelectUser(user)}
+							key={applicant.id}
+							onClick={() => handleSelectApplicant(applicant)}
 							className={`p-4 hover:bg-white cursor-pointer border-b border-gray-100 transition-colors ${
-								selectedUser?.id === user.id ? "bg-white border-indigo-200 shadow-sm" : ""
+								selectedApplicant?.id === applicant.id ? "bg-white border-indigo-200 shadow-sm" : ""
 							}`}
 						>
 							<div className='flex items-center space-x-3'>
 								<div className='relative'>
 									<div className='w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white text-lg'>
-										{user.avatar}
+										{applicant.avatar}
 									</div>
 									<div
 										className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-											user.isOnline ? "bg-green-400" : "bg-gray-400"
+											applicant.isOnline ? "bg-green-400" : "bg-gray-400"
 										}`}
 									></div>
 								</div>
 								<div className='flex-1 min-w-0'>
-									<p className='font-medium text-gray-900 truncate'>{user.name}</p>
-									<p className='text-sm text-gray-500 truncate'>{user.isOnline ? "在线" : user.lastSeen}</p>
+									<div className='flex items-center space-x-2 mb-1'>
+										<p className='font-medium text-gray-900 truncate'>{applicant.name}</p>
+										<span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(applicant.status)}`}>
+											{getStatusText(applicant.status)}
+										</span>
+									</div>
+									<p className='text-xs text-gray-500 truncate'>申请：{applicant.appliedPosition}</p>
+									<p className='text-xs text-gray-400 truncate'>{applicant.isOnline ? "在线" : applicant.lastSeen}</p>
 								</div>
 							</div>
 						</div>
@@ -244,14 +306,14 @@ export default function ChatPage() {
 
 			{/* 右侧聊天区域 */}
 			<div className='flex-1 flex flex-col min-w-0'>
-				{selectedUser ? (
+				{selectedApplicant ? (
 					<>
 						{/* 聊天头部 */}
 						<div className='p-4 bg-white border-b border-gray-200 flex-shrink-0'>
 							<div className='flex items-center space-x-3'>
-								{/* 移动端用户列表切换按钮 */}
+								{/* 移动端申请者列表切换按钮 */}
 								<button
-									onClick={() => setShowUserList(true)}
+									onClick={() => setShowApplicantList(true)}
 									className='lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0'
 								>
 									<svg
@@ -271,24 +333,80 @@ export default function ChatPage() {
 
 								<div className='relative flex-shrink-0'>
 									<div className='w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white text-lg'>
-										{selectedUser.avatar}
+										{selectedApplicant.avatar}
 									</div>
 									<div
 										className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-											selectedUser.isOnline ? "bg-green-400" : "bg-gray-400"
+											selectedApplicant.isOnline ? "bg-green-400" : "bg-gray-400"
 										}`}
 									></div>
 								</div>
 								<div className='min-w-0 flex-1'>
-									<h3 className='font-semibold text-gray-900 truncate'>{selectedUser.name}</h3>
-									<p className='text-sm text-gray-500 truncate'>{selectedUser.isOnline ? "在线" : selectedUser.lastSeen}</p>
+									<div className='flex items-center space-x-2 mb-1'>
+										<h3 className='font-semibold text-gray-900 truncate'>{selectedApplicant.name}</h3>
+										<span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(selectedApplicant.status)}`}>
+											{getStatusText(selectedApplicant.status)}
+										</span>
+									</div>
+									<p className='text-sm text-gray-500 truncate'>申请职位：{selectedApplicant.appliedPosition}</p>
 								</div>
 
 								{/* 聊天操作按钮 */}
 								<div className='flex items-center space-x-2'>
-									<button className='p-2 text-gray-400 hover:text-gray-600 transition-colors'>📞</button>
-									<button className='p-2 text-gray-400 hover:text-gray-600 transition-colors'>📹</button>
-									<button className='p-2 text-gray-400 hover:text-gray-600 transition-colors'>ℹ️</button>
+									<button
+										className='p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors'
+										title='安排面试'
+									>
+										<svg
+											className='w-5 h-5'
+											fill='none'
+											stroke='currentColor'
+											viewBox='0 0 24 24'
+										>
+											<path
+												strokeLinecap='round'
+												strokeLinejoin='round'
+												strokeWidth={2}
+												d='M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4h3a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2h3z'
+											/>
+										</svg>
+									</button>
+									<button
+										className='p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors'
+										title='查看简历'
+									>
+										<svg
+											className='w-5 h-5'
+											fill='none'
+											stroke='currentColor'
+											viewBox='0 0 24 24'
+										>
+											<path
+												strokeLinecap='round'
+												strokeLinejoin='round'
+												strokeWidth={2}
+												d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+											/>
+										</svg>
+									</button>
+									<button
+										className='p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors'
+										title='申请详情'
+									>
+										<svg
+											className='w-5 h-5'
+											fill='none'
+											stroke='currentColor'
+											viewBox='0 0 24 24'
+										>
+											<path
+												strokeLinecap='round'
+												strokeLinejoin='round'
+												strokeWidth={2}
+												d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+											/>
+										</svg>
+									</button>
 								</div>
 							</div>
 						</div>
@@ -305,7 +423,7 @@ export default function ChatPage() {
 									>
 										{!message.isMe && (
 											<div className='w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0'>
-												{selectedUser.avatar}
+												{selectedApplicant.avatar}
 											</div>
 										)}
 										<div
@@ -330,22 +448,48 @@ export default function ChatPage() {
 							>
 								<button
 									type='button'
-									className='p-2 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0'
+									className='p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex-shrink-0'
+									title='发送文件'
 								>
-									📎
+									<svg
+										className='w-5 h-5'
+										fill='none'
+										stroke='currentColor'
+										viewBox='0 0 24 24'
+									>
+										<path
+											strokeLinecap='round'
+											strokeLinejoin='round'
+											strokeWidth={2}
+											d='M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13'
+										/>
+									</svg>
 								</button>
 								<input
 									type='text'
 									value={newMessage}
 									onChange={(e) => setNewMessage(e.target.value)}
-									placeholder='输入消息...'
-									className='flex-1 px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm sm:text-base'
+									placeholder='输入消息与申请者沟通...'
+									className='flex-1 px-3 sm:px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm sm:text-base text-gray-900 placeholder-gray-500'
 								/>
 								<button
 									type='button'
-									className='p-2 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0'
+									className='p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex-shrink-0'
+									title='选择表情'
 								>
-									😊
+									<svg
+										className='w-5 h-5'
+										fill='none'
+										stroke='currentColor'
+										viewBox='0 0 24 24'
+									>
+										<path
+											strokeLinecap='round'
+											strokeLinejoin='round'
+											strokeWidth={2}
+											d='M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+										/>
+									</svg>
 								</button>
 								<button
 									type='submit'
@@ -358,38 +502,38 @@ export default function ChatPage() {
 						</div>
 					</>
 				) : (
-					/* 未选择用户时的空状态 */
+					/* 未选择申请者时的空状态 */
 					<div className='flex-1 flex items-center justify-center p-4 bg-gray-50'>
 						<div className='text-center max-w-md mx-auto'>
-							{/* 移动端显示用户列表按钮 */}
+							{/* 移动端显示申请者列表按钮 */}
 							<div className='lg:hidden mb-6'>
 								<button
-									onClick={() => setShowUserList(true)}
+									onClick={() => setShowApplicantList(true)}
 									className='bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-lg'
 								>
-									查看团队成员
+									查看申请者列表
 								</button>
 							</div>
 
-							<div className='w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-full flex items-center justify-center text-3xl sm:text-4xl text-gray-400 mx-auto mb-4 shadow-sm'>
-								💬
+							<div className='w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-full flex items-center justify-center text-3xl sm:text-4xl text-gray-600 mx-auto mb-4 shadow-sm'>
+								💼
 							</div>
-							<h3 className='text-lg sm:text-xl font-semibold text-gray-900 mb-2'>选择团队成员开始聊天</h3>
+							<h3 className='text-lg sm:text-xl font-semibold text-gray-900 mb-2'>选择申请者开始沟通</h3>
 							<p className='text-gray-500 text-sm sm:text-base px-4'>
-								<span className='hidden lg:inline'>从左侧成员列表中</span>
-								<span className='lg:hidden'>点击上方按钮查看成员列表，</span>
-								选择一个成员开始对话
+								<span className='hidden lg:inline'>从左侧申请者列表中</span>
+								<span className='lg:hidden'>点击上方按钮查看申请者列表，</span>
+								选择一位申请者开始面试沟通
 							</p>
 
 							{/* 快捷操作 */}
 							<div className='mt-8 space-y-3'>
 								<div className='flex items-center justify-center space-x-4 text-sm text-gray-500'>
-									<span>💡 快捷操作：</span>
+									<span>💡 沟通功能：</span>
 								</div>
 								<div className='flex flex-wrap justify-center gap-2'>
-									<span className='px-3 py-1 bg-white rounded-full text-xs text-gray-600 border border-gray-200'>@提及成员</span>
-									<span className='px-3 py-1 bg-white rounded-full text-xs text-gray-600 border border-gray-200'>发送文件</span>
-									<span className='px-3 py-1 bg-white rounded-full text-xs text-gray-600 border border-gray-200'>语音通话</span>
+									<span className='px-3 py-1 bg-white rounded-full text-xs text-gray-600 border border-gray-200'>面试邀请</span>
+									<span className='px-3 py-1 bg-white rounded-full text-xs text-gray-600 border border-gray-200'>简历查看</span>
+									<span className='px-3 py-1 bg-white rounded-full text-xs text-gray-600 border border-gray-200'>状态更新</span>
 								</div>
 							</div>
 						</div>

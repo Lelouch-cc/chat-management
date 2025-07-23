@@ -26,7 +26,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 			current: pathname === "/dashboard/jobs",
 		},
 		{
-			name: "团队聊天",
+			name: "申请者沟通",
 			href: "/dashboard/chat",
 			icon: "💬",
 			current: pathname === "/dashboard/chat",
@@ -80,7 +80,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 						{/* 移动端关闭按钮 */}
 						<button
 							onClick={() => setSidebarOpen(false)}
-							className='lg:hidden p-1 hover:bg-indigo-700 rounded'
+							className='lg:hidden p-1 hover:bg-indigo-700 rounded transition-colors'
 						>
 							<svg
 								className='w-5 h-5'
@@ -145,7 +145,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 						{/* 移动端菜单按钮 */}
 						<button
 							onClick={() => setSidebarOpen(true)}
-							className='lg:hidden p-2 hover:bg-gray-100 rounded-lg'
+							className='lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors'
 						>
 							<svg
 								className='w-6 h-6 text-gray-600'
@@ -167,7 +167,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 					{/* 右侧操作区域 */}
 					<div className='flex items-center space-x-4'>
-						<div className='text-sm text-gray-500'>
+						<div className='text-sm text-gray-600'>
 							{new Date().toLocaleDateString("zh-CN", {
 								year: "numeric",
 								month: "long",

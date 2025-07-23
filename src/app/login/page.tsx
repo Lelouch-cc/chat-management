@@ -83,7 +83,7 @@ export default function LoginPage() {
 							type='text'
 							value={username}
 							onChange={(e) => setUsername(e.target.value)}
-							className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-200'
+							className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-200 text-gray-900 placeholder-gray-500'
 							placeholder='请输入管理员账号'
 							disabled={isLoading}
 						/>
@@ -102,7 +102,7 @@ export default function LoginPage() {
 							type='password'
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
-							className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-200'
+							className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-200 text-gray-900 placeholder-gray-500'
 							placeholder='请输入密码'
 							disabled={isLoading}
 						/>

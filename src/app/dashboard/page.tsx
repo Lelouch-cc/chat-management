@@ -40,7 +40,7 @@ export default function DashboardPage() {
 			description: "待处理申请",
 		},
 		{
-			name: "团队消息",
+			name: "沟通消息",
 			value: "89",
 			change: "+5%",
 			changeType: "increase",
@@ -48,7 +48,7 @@ export default function DashboardPage() {
 			description: "今日消息数",
 		},
 		{
-			name: "在线用户",
+			name: "在线申请者",
 			value: "8",
 			change: "0%",
 			changeType: "neutral",
@@ -74,8 +74,8 @@ export default function DashboardPage() {
 			color: "bg-green-500 hover:bg-green-600",
 		},
 		{
-			name: "团队聊天",
-			description: "与团队成员交流",
+			name: "申请者沟通",
+			description: "与申请者在线交流",
 			href: "/dashboard/chat",
 			icon: "💬",
 			color: "bg-purple-500 hover:bg-purple-600",
@@ -109,8 +109,8 @@ export default function DashboardPage() {
 		},
 		{
 			id: 3,
-			action: "团队消息",
-			subject: "项目进度讨论",
+			action: "申请者消息",
+			subject: "面试时间确认",
 			time: "1小时前",
 			user: "李四",
 			type: "message",
