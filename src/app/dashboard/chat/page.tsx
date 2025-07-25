@@ -1,11 +1,21 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useMultiPublisherChat } from "../../../hooks/useMultiPublisherChat";
-import { ChatAPI } from "../../../services/ChatAPI";
-import type { Publisher, Applicant, AdminUser } from "../../../types/chat";
+import { useRouter } from "next/navigation";
 
-// 消息类型定义（用于显示）
+// 申请者类型定义
+interface Applicant {
+	id: number;
+	name: string;
+	avatar: string;
+	isOnline: boolean;
+	lastSeen?: string;
+	appliedPosition: string;
+	applicationDate: string;
+	status: "pending" | "interviewing" | "rejected" | "hired";
+}
+
+// 消息类型定义
 interface Message {
 	id: number;
 	senderId: number;
@@ -15,199 +25,80 @@ interface Message {
 	isMe: boolean;
 }
 
-// 模拟数据
-const mockPublishers: Publisher[] = [
-	{
-		id: 1,
-		name: "李经理",
-		handle: 1001,
-		avatar: "👨‍💼",
-		position: "技术总监",
-		department: "技术部",
-		isActive: true,
-	},
-	{
-		id: 2,
-		name: "王主管",
-		handle: 1002,
-		avatar: "👩‍💼",
-		position: "产品总监",
-		department: "产品部",
-		isActive: true,
-	},
-	{
-		id: 3,
-		name: "张组长",
-		handle: 1003,
-		avatar: "👨‍🏫",
-		position: "设计总监",
-		department: "设计部",
-		isActive: true,
-	},
-];
+export default function ChatPage() {
+	const [currentUser, setCurrentUser] = useState<{ username: string } | null>(null);
+	const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
+	const [messages, setMessages] = useState<Message[]>([]);
+	const [newMessage, setNewMessage] = useState("");
+	const [showApplicantList, setShowApplicantList] = useState(false); // 移动端申请者列表显示状态
+	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const router = useRouter();
 
-const mockApplicantsByPublisher = new Map<number, Applicant[]>([
-	[1, [ // 李经理的申请者
+	// 模拟申请者列表数据
+	const [applicants] = useState<Applicant[]>([
 		{
 			id: 1,
 			name: "张小明",
-			handle: 2001,
 			avatar: "👨‍💻",
 			isOnline: true,
 			appliedPosition: "高级前端工程师",
 			applicationDate: "2024-01-15",
 			status: "interviewing",
-			publisherId: 1,
-			chatId: 101,
 		},
 		{
 			id: 2,
+			name: "李美丽",
+			avatar: "👩‍🎨",
+			isOnline: true,
+			appliedPosition: "UI/UX 设计师",
+			applicationDate: "2024-01-14",
+			status: "pending",
+		},
+		{
+			id: 3,
 			name: "王建国",
-			handle: 2002,
 			avatar: "👨‍🔬",
 			isOnline: false,
 			lastSeen: "2小时前",
 			appliedPosition: "Java 后端工程师",
 			applicationDate: "2024-01-13",
 			status: "pending",
-			publisherId: 1,
-			chatId: 102,
 		},
-	]],
-	[2, [ // 王主管的申请者
 		{
-			id: 3,
+			id: 4,
 			name: "刘晓红",
-			handle: 2003,
 			avatar: "👩‍💼",
 			isOnline: true,
 			appliedPosition: "产品经理",
 			applicationDate: "2024-01-12",
 			status: "interviewing",
-			publisherId: 2,
-			chatId: 103,
 		},
 		{
-			id: 4,
+			id: 5,
 			name: "陈志强",
-			handle: 2004,
 			avatar: "👨‍🎓",
 			isOnline: false,
 			lastSeen: "1天前",
-			appliedPosition: "产品助理",
+			appliedPosition: "高级前端工程师",
 			applicationDate: "2024-01-10",
 			status: "pending",
-			publisherId: 2,
-			chatId: 104,
 		},
-	]],
-	[3, [ // 张组长的申请者
-		{
-			id: 5,
-			name: "李美丽",
-			handle: 2005,
-			avatar: "👩‍🎨",
-			isOnline: true,
-			appliedPosition: "UI/UX 设计师",
-			applicationDate: "2024-01-14",
-			status: "pending",
-			publisherId: 3,
-			chatId: 105,
-		},
-	]],
-]);
-
-export default function ChatPage() {
-	const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
-	const [newMessage, setNewMessage] = useState("");
-	const [showApplicantList, setShowApplicantList] = useState(false);
-	const [showPublisherList, setShowPublisherList] = useState(false);
-	const [messages, setMessages] = useState<Message[]>([]);
-	const messagesEndRef = useRef<HTMLDivElement>(null);
-
-	// 使用多发布者聊天Hook
-	const {
-		isConnected,
-		currentPublisher,
-		publishers,
-		selectedApplicant,
-		switchPublisher,
-		loadApplicantsForPublisher,
-		selectApplicant,
-		sendMessage: sendChatMessage,
-		getApplicantMessages,
-		getCurrentPublisherApplicants,
-		isApplicantOnline,
-	} = useMultiPublisherChat({
-		adminUser: adminUser || undefined,
-		chatAPI: ChatAPI,
-		autoConnect: true,
-	});
-
+	]);
 
 	/**
-	 * 初始化管理员用户和模拟数据
+	 * 获取当前用户信息
 	 */
 	useEffect(() => {
 		try {
 			const userStr = localStorage.getItem("user");
 			if (userStr) {
 				const user = JSON.parse(userStr);
-				// 创建管理员用户
-				const mockAdminUser: AdminUser = {
-					handle: user.handle || 9999,
-					username: user.username || "管理员",
-					role: "admin",
-					publishers: mockPublishers,
-				};
-				setAdminUser(mockAdminUser);
-			} else {
-				// 如果没有用户信息，创建默认管理员
-				const defaultAdminUser: AdminUser = {
-					handle: 9999,
-					username: "管理员",
-					role: "admin",
-					publishers: mockPublishers,
-				};
-				setAdminUser(defaultAdminUser);
+				setCurrentUser(user);
 			}
 		} catch (error) {
 			console.error("解析用户信息失败:", error);
 		}
 	}, []);
-
-	/**
-	 * 加载发布者的申请者数据
-	 */
-	useEffect(() => {
-		if (currentPublisher && mockApplicantsByPublisher.has(currentPublisher.id)) {
-			const applicants = mockApplicantsByPublisher.get(currentPublisher.id) || [];
-			loadApplicantsForPublisher(currentPublisher.id, applicants);
-		}
-	}, [currentPublisher, loadApplicantsForPublisher]);
-
-	/**
-	 * 监听选中申请者的消息变化
-	 */
-	useEffect(() => {
-		if (selectedApplicant) {
-			const chatMessages = getApplicantMessages(selectedApplicant.id);
-			const displayMessages: Message[] = chatMessages.map((msg, index) => ({
-				id: index + 1,
-				senderId: msg.senderId || 0,
-				senderName: msg.senderId === adminUser?.handle ? (adminUser?.username || '管理员') : selectedApplicant.name,
-				content: typeof msg.content === 'string' ? JSON.parse(msg.content).text || msg.content : msg.content,
-				timestamp: new Date(msg.timestamp || Date.now()).toLocaleTimeString('zh-CN', {
-					hour: '2-digit',
-					minute: '2-digit'
-				}),
-				isMe: msg.senderId === adminUser?.handle
-			}));
-			setMessages(displayMessages);
-		} else {
-			setMessages([]);
-		}
-	}, [selectedApplicant, getApplicantMessages, adminUser]);
 
 	/**
 	 * 滚动到消息底部
@@ -220,39 +111,67 @@ export default function ChatPage() {
 	 * 选择申请者开始聊天
 	 */
 	const handleSelectApplicant = (applicant: Applicant) => {
-		selectApplicant(applicant);
+		setSelectedApplicant(applicant);
 		setShowApplicantList(false); // 选择申请者后隐藏列表（移动端）
-	};
-
-	/**
-	 * 切换发布者
-	 */
-	const handleSwitchPublisher = async (publisher: Publisher) => {
-		const success = await switchPublisher(publisher);
-		if (success) {
-			setShowPublisherList(false);
-		}
+		// 模拟加载该申请者的历史消息
+		const mockMessages: Message[] = [
+			{
+				id: 1,
+				senderId: applicant.id,
+				senderName: applicant.name,
+				content: `您好！我是${applicant.name}，很高兴能申请贵公司的${applicant.appliedPosition}职位。`,
+				timestamp: "10:30",
+				isMe: false,
+			},
+			{
+				id: 2,
+				senderId: 0,
+				senderName: currentUser?.username || "",
+				content: "您好！感谢您的申请，我们已经收到了您的简历，请问您方便聊聊您的工作经验吗？",
+				timestamp: "10:32",
+				isMe: true,
+			},
+		];
+		setMessages(mockMessages);
 	};
 
 	/**
 	 * 发送消息
 	 */
-	const handleSendMessage = async (e: React.FormEvent) => {
+	const handleSendMessage = (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!newMessage.trim() || !selectedApplicant || !adminUser) return;
+		if (!newMessage.trim() || !selectedApplicant || !currentUser) return;
 
-		const messageText = newMessage.trim();
-		setNewMessage(""); // 立即清空输入框
+		const message: Message = {
+			id: messages.length + 1,
+			senderId: 0,
+			senderName: currentUser.username,
+			content: newMessage.trim(),
+			timestamp: new Date().toLocaleTimeString("zh-CN", {
+				hour: "2-digit",
+				minute: "2-digit",
+			}),
+			isMe: true,
+		};
 
-		try {
-			const success = await sendChatMessage(messageText);
-			if (!success) {
-				console.error('发送消息失败');
-				// 可以在这里显示错误提示
-			}
-		} catch (error) {
-			console.error('发送消息异常:', error);
-		}
+		setMessages((prev) => [...prev, message]);
+		setNewMessage("");
+
+		// 模拟申请者回复（延迟1-2秒）
+		setTimeout(() => {
+			const replyMessage: Message = {
+				id: messages.length + 2,
+				senderId: selectedApplicant.id,
+				senderName: selectedApplicant.name,
+				content: `收到您的消息："${message.content}"，我会认真考虑并回复您。`,
+				timestamp: new Date().toLocaleTimeString("zh-CN", {
+					hour: "2-digit",
+					minute: "2-digit",
+				}),
+				isMe: false,
+			};
+			setMessages((prev) => [...prev, replyMessage]);
+		}, Math.random() * 1000 + 1000);
 	};
 
 	/**
@@ -291,19 +210,13 @@ export default function ChatPage() {
 		}
 	};
 
-	// 获取当前发布者的申请者列表
-	const currentApplicants = getCurrentPublisherApplicants();
-
 	return (
 		<div className='h-full flex bg-white relative'>
 			{/* 移动端遮罩层 */}
-			{(showApplicantList || showPublisherList) && (
+			{showApplicantList && (
 				<div
 					className='fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden'
-					onClick={() => {
-						setShowApplicantList(false);
-						setShowPublisherList(false);
-					}}
+					onClick={() => setShowApplicantList(false)}
 				/>
 			)}
 
@@ -315,10 +228,13 @@ export default function ChatPage() {
 						: "fixed inset-y-0 left-0 -translate-x-full lg:relative lg:translate-x-0"
 				}`}
 			>
-				{/* 发布者选择器 */}
+				{/* 申请者列表头部 */}
 				<div className='p-4 bg-white border-b border-gray-200'>
-					<div className='flex items-center justify-between mb-3'>
-						<h3 className='font-semibold text-gray-900'>当前发布者</h3>
+					<div className='flex items-center justify-between'>
+						<div className='flex-1'>
+							<h3 className='font-semibold text-gray-900'>职位申请者</h3>
+							<p className='text-sm text-gray-500'>选择申请者开始沟通</p>
+						</div>
 						{/* 移动端关闭按钮 */}
 						<button
 							onClick={() => setShowApplicantList(false)}
@@ -339,100 +255,21 @@ export default function ChatPage() {
 							</svg>
 						</button>
 					</div>
-					
-					{/* 当前发布者显示/切换按钮 */}
-					<button
-						onClick={() => setShowPublisherList(!showPublisherList)}
-						className='w-full flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors'
-					>
-						{currentPublisher ? (
-							<>
-								<div className='w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-sm'>
-									{currentPublisher.avatar}
-								</div>
-								<div className='flex-1 text-left'>
-									<p className='font-medium text-gray-900'>{currentPublisher.name}</p>
-									<p className='text-xs text-gray-500'>{currentPublisher.position}</p>
-								</div>
-								<svg className='w-4 h-4 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-									<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
-								</svg>
-							</>
-						) : (
-							<>
-								<div className='w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center'>
-									<span className='text-gray-600 text-sm'>?</span>
-								</div>
-								<div className='flex-1 text-left'>
-									<p className='font-medium text-gray-500'>选择发布者</p>
-								</div>
-							</>
-						)}
-					</button>
-
-					{/* 发布者下拉列表 */}
-					{showPublisherList && (
-						<div className='absolute left-4 right-4 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-60 max-h-48 overflow-y-auto'>
-							{publishers.map((publisher) => (
-								<button
-									key={publisher.id}
-									onClick={() => handleSwitchPublisher(publisher)}
-									className={`w-full flex items-center space-x-3 p-3 hover:bg-gray-50 transition-colors ${
-										currentPublisher?.id === publisher.id ? 'bg-blue-50' : ''
-									}`}
-								>
-									<div className='w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-sm'>
-										{publisher.avatar}
-									</div>
-									<div className='flex-1 text-left'>
-										<p className='font-medium text-gray-900'>{publisher.name}</p>
-										<p className='text-xs text-gray-500'>{publisher.position} • {publisher.department}</p>
-									</div>
-									{currentPublisher?.id === publisher.id && (
-										<svg className='w-4 h-4 text-blue-500' fill='currentColor' viewBox='0 0 20 20'>
-											<path fillRule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clipRule='evenodd' />
-										</svg>
-									)}
-								</button>
-							))}
-						</div>
-					)}
 				</div>
 
-				{/* 申请者列表头部 */}
+				{/* 申请统计 */}
 				<div className='p-4 bg-white border-b border-gray-200'>
-					<div className='flex items-center justify-between'>
-						<div className='flex-1'>
-							<h3 className='font-semibold text-gray-900'>职位申请者</h3>
-							<p className='text-sm text-gray-500'>
-								{currentPublisher ? `${currentPublisher.name}的申请者` : '请先选择发布者'}
-							</p>
-						</div>
-					</div>
-				</div>
-
-				{/* 连接状态和申请统计 */}
-				<div className='p-4 bg-white border-b border-gray-200'>
-					<div className='flex items-center justify-between text-sm mb-2'>
-						<span className='text-gray-600'>连接状态</span>
-						<div className='flex items-center space-x-2'>
-							<div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`}></div>
-							<span className={`font-medium ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
-								{isConnected ? '已连接' : '未连接'}
-							</span>
-						</div>
-					</div>
 					<div className='flex items-center justify-between text-sm'>
 						<span className='text-gray-600'>在线申请者</span>
 						<span className='text-green-600 font-medium'>
-							{currentApplicants.filter((applicant) => isApplicantOnline(applicant.handle)).length}/{currentApplicants.length}
+							{applicants.filter((applicant) => applicant.isOnline).length}/{applicants.length}
 						</span>
 					</div>
 				</div>
 
 				{/* 申请者列表 */}
 				<div className='flex-1 overflow-y-auto'>
-					{currentApplicants.length > 0 ? currentApplicants.map((applicant) => (
+					{applicants.map((applicant) => (
 						<div
 							key={applicant.id}
 							onClick={() => handleSelectApplicant(applicant)}
@@ -447,7 +284,7 @@ export default function ChatPage() {
 									</div>
 									<div
 										className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-											isApplicantOnline(applicant.handle) ? "bg-green-400" : "bg-gray-400"
+											applicant.isOnline ? "bg-green-400" : "bg-gray-400"
 										}`}
 									></div>
 								</div>
@@ -459,23 +296,11 @@ export default function ChatPage() {
 										</span>
 									</div>
 									<p className='text-xs text-gray-500 truncate'>申请：{applicant.appliedPosition}</p>
-									<p className='text-xs text-gray-400 truncate'>{isApplicantOnline(applicant.handle) ? "在线" : applicant.lastSeen}</p>
+									<p className='text-xs text-gray-400 truncate'>{applicant.isOnline ? "在线" : applicant.lastSeen}</p>
 								</div>
 							</div>
 						</div>
-					)) : (
-						<div className='flex-1 flex items-center justify-center p-8'>
-							<div className='text-center'>
-								<div className='w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center text-2xl text-gray-400 mx-auto mb-4'>
-									👥
-								</div>
-								<h3 className='text-lg font-medium text-gray-900 mb-2'>暂无申请者</h3>
-								<p className='text-gray-500 text-sm'>
-									{currentPublisher ? `${currentPublisher.name}暂时没有申请者` : '请先选择发布者'}
-								</p>
-							</div>
-						</div>
-					)}
+					))}
 				</div>
 			</div>
 
@@ -512,7 +337,7 @@ export default function ChatPage() {
 									</div>
 									<div
 										className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-											isApplicantOnline(selectedApplicant.handle) ? "bg-green-400" : "bg-gray-400"
+											selectedApplicant.isOnline ? "bg-green-400" : "bg-gray-400"
 										}`}
 									></div>
 								</div>
@@ -523,12 +348,7 @@ export default function ChatPage() {
 											{getStatusText(selectedApplicant.status)}
 										</span>
 									</div>
-									<p className='text-sm text-gray-500 truncate'>
-										申请职位：{selectedApplicant.appliedPosition}
-										{currentPublisher && (
-											<span className='text-gray-400'> • 面试官：{currentPublisher.name}</span>
-										)}
-									</p>
+									<p className='text-sm text-gray-500 truncate'>申请职位：{selectedApplicant.appliedPosition}</p>
 								</div>
 
 								{/* 聊天操作按钮 */}
@@ -601,7 +421,7 @@ export default function ChatPage() {
 									<div
 										className={`flex items-end space-x-2 max-w-[75%] sm:max-w-md ${message.isMe ? "flex-row-reverse space-x-reverse" : ""}`}
 									>
-										{!message.isMe && selectedApplicant && (
+										{!message.isMe && (
 											<div className='w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0'>
 												{selectedApplicant.avatar}
 											</div>
