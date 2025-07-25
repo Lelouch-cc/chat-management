@@ -1,15 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { User, UserRole, UserStatus, Gender, ROLE_PERMISSIONS, PermissionModule, PermissionAction } from "@/types/user";
+import { Form, Button, Card, Typography, Avatar } from "@douyinfe/semi-ui";
+import { IconUser, IconLock } from "@douyinfe/semi-icons";
+import toast from "react-hot-toast";
+import { User, UserRole, UserStatus, Gender, ROLE_PERMISSIONS } from "@/types/user";
+
+const { Title, Text } = Typography;
+
+interface LoginFormValues {
+	username: string;
+	password: string;
+}
 
 export default function LoginPage() {
-	const [username, setUsername] = useState("");
-	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState("");
 	const router = useRouter();
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const formRef = useRef<any>(null);
 
 	// 模拟用户数据库（实际项目中这些数据应该在后端）
 	const mockUsers: User[] = [
@@ -116,17 +125,26 @@ export default function LoginPage() {
 	/**
 	 * 处理表单提交
 	 */
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setError("");
+	const handleSubmit = async (values: LoginFormValues) => {
 		setIsLoading(true);
 
+		// 显示登录中提示
+		const loadingToast = toast.loading("正在登录中...", {
+			style: {
+				borderRadius: "8px",
+				background: "#333",
+				color: "#fff",
+			},
+		});
+
 		try {
+			const { username, password } = values;
+
 			// 基础表单验证
-			if (!username.trim()) {
+			if (!username?.trim()) {
 				throw new Error("请输入用户名");
 			}
-			if (!password.trim()) {
+			if (!password?.trim()) {
 				throw new Error("请输入密码");
 			}
 
@@ -145,133 +163,133 @@ export default function LoginPage() {
 			localStorage.setItem("isLoggedIn", "true");
 			localStorage.setItem("userPermissions", JSON.stringify(authenticatedUser.permissions));
 
-			// 登录成功，跳转到管理后台主页
-			router.push("/dashboard");
+			// 显示登录成功提示
+			toast.success(`欢迎回来，${authenticatedUser.nickname}！`, {
+				id: loadingToast,
+				duration: 2000,
+				style: {
+					borderRadius: "8px",
+					background: "#10B981",
+					color: "#fff",
+				},
+			});
+
+			// 延迟跳转，让用户看到成功提示
+			setTimeout(() => {
+				router.push("/dashboard");
+			}, 500);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "登录失败，请重试");
+			const errorMessage = err instanceof Error ? err.message : "登录失败，请重试";
+
+			// 显示错误提示
+			toast.error(errorMessage, {
+				id: loadingToast,
+				duration: 4000,
+				style: {
+					borderRadius: "8px",
+					background: "#EF4444",
+					color: "#fff",
+				},
+			});
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
 	return (
-		<div className='min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4'>
-			<div className='bg-white rounded-2xl shadow-xl w-full max-w-md p-8'>
-				{/* 标题区域 */}
-				<div className='text-center mb-8'>
-					<h1 className='text-3xl font-bold text-gray-900 mb-2'>Jobbit 管理后台</h1>
-					<p className='text-gray-600'>欢迎登录管理系统</p>
-				</div>
-
-				{/* 错误提示 */}
-				{error && (
-					<div className='bg-red-50 border border-red-200 rounded-lg p-4 mb-6'>
-						<div className='flex items-center'>
-							<div className='text-red-800 text-sm'>⚠️ {error}</div>
-						</div>
-					</div>
-				)}
-
-				{/* 登录表单 */}
-				<form
-					onSubmit={handleSubmit}
-					className='space-y-6'
+		<>
+			<div className='min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4'>
+				<Card
+					className='w-full max-w-xl'
+					bordered={false}
+					shadows='hover'
+					style={{
+						backgroundColor: "rgba(255, 255, 255, 0.95)",
+						backdropFilter: "blur(10px)",
+						borderRadius: "16px",
+						padding: "40px",
+					}}
 				>
-					{/* 用户名输入框 */}
-					<div>
-						<label
-							htmlFor='username'
-							className='block text-sm font-medium text-gray-700 mb-2'
+					{/* 标题区域 */}
+					<div className='text-center mb-10'>
+						<Avatar
+							size='large'
+							style={{
+								backgroundColor: "var(--semi-color-primary)",
+								marginBottom: "16px",
+							}}
 						>
-							用户名
-						</label>
-						<input
-							id='username'
-							type='text'
-							value={username}
-							onChange={(e) => setUsername(e.target.value)}
-							className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-200 text-gray-900 placeholder-gray-500'
-							placeholder='请输入用户名'
-							disabled={isLoading}
-						/>
+							💼
+						</Avatar>
+						<Title
+							heading={2}
+							style={{ margin: "8px 0", color: "var(--semi-color-text-0)" }}
+						>
+							Jobbit 管理后台
+						</Title>
+						<Text type='secondary'>欢迎登录管理系统</Text>
 					</div>
 
-					{/* 密码输入框 */}
-					<div>
-						<label
-							htmlFor='password'
-							className='block text-sm font-medium text-gray-700 mb-2'
-						>
-							密码
-						</label>
-						<input
-							id='password'
-							type='password'
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-200 text-gray-900 placeholder-gray-500'
-							placeholder='请输入密码'
-							disabled={isLoading}
-						/>
-					</div>
-
-					{/* 登录按钮 */}
-					<button
-						type='submit'
-						disabled={isLoading}
-						className='w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center'
+					{/* 登录表单 */}
+					<Form
+						ref={formRef}
+						onSubmit={handleSubmit}
+						style={{ marginBottom: "32px" }}
 					>
-						{isLoading ? (
-							<>
-								<svg
-									className='animate-spin -ml-1 mr-3 h-5 w-5 text-white'
-									fill='none'
-									viewBox='0 0 24 24'
-								>
-									<circle
-										className='opacity-25'
-										cx='12'
-										cy='12'
-										r='10'
-										stroke='currentColor'
-										strokeWidth='4'
-									></circle>
-									<path
-										className='opacity-75'
-										fill='currentColor'
-										d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-									></path>
-								</svg>
-								登录中...
-							</>
-						) : (
-							"登录管理后台"
-						)}
-					</button>
-				</form>
+						<Form.Input
+							field='username'
+							label='用户名'
+							prefix={<IconUser style={{ margin: "0 8px" }} />}
+							placeholder='请输入用户名'
+							size='large'
+							disabled={isLoading}
+							rules={[{ required: true, message: "请输入用户名" }]}
+							style={{
+								marginBottom: "20px",
+								width: "100%",
+								height: "56px",
+							}}
+						/>
 
-				{/* 底部提示 */}
-				<div className='mt-8 text-center'>
-					<div className='text-sm text-gray-500 mb-4'>
-						<p className='font-medium mb-2'>演示账号：</p>
-						<div className='space-y-1 text-xs'>
-							<p>
-								<span className='font-mono bg-gray-100 px-2 py-1 rounded'>admin</span> - 超级管理员
-							</p>
-							<p>
-								<span className='font-mono bg-gray-100 px-2 py-1 rounded'>hr_manager</span> - HR经理
-							</p>
-							<p>
-								<span className='font-mono bg-gray-100 px-2 py-1 rounded'>hr_staff_001</span> - HR专员
-							</p>
-							<p>
-								<span className='font-mono bg-gray-100 px-2 py-1 rounded'>viewer_001</span> - 只读用户
-							</p>
-						</div>
-						<p className='mt-3 text-gray-400'>密码：任意6位以上字符</p>
-					</div>
-				</div>
+						<Form.Input
+							field='password'
+							label='密码'
+							type='password'
+							prefix={<IconLock style={{ margin: "0 8px" }} />}
+							placeholder='请输入密码'
+							size='large'
+							disabled={isLoading}
+							rules={[
+								{ required: true, message: "请输入密码" },
+								{ min: 6, message: "密码至少6位字符" },
+							]}
+							style={{
+								marginBottom: "28px",
+								width: "100%",
+								height: "56px",
+							}}
+						/>
+
+						<Button
+							htmlType='submit'
+							type='primary'
+							theme='solid'
+							size='large'
+							loading={isLoading}
+							block
+							style={{
+								height: "52px",
+								fontSize: "16px",
+								fontWeight: "600",
+								width: "100%",
+								borderRadius: "8px",
+							}}
+						>
+							{isLoading ? "登录中..." : "登录管理后台"}
+						</Button>
+					</Form>
+				</Card>
 			</div>
-		</div>
+		</>
 	);
 }
