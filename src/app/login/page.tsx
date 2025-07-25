@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, UserRole, UserStatus, Gender, ROLE_PERMISSIONS, PermissionModule, PermissionAction } from "@/types/user";
+import toast from "react-hot-toast";
+import { User, UserRole, UserStatus, Gender, ROLE_PERMISSIONS } from "@/types/user";
 
 export default function LoginPage() {
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState("");
 	const router = useRouter();
 
 	// 模拟用户数据库（实际项目中这些数据应该在后端）
@@ -118,8 +118,16 @@ export default function LoginPage() {
 	 */
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setError("");
 		setIsLoading(true);
+
+		// 显示登录中提示
+		const loadingToast = toast.loading("正在登录中...", {
+			style: {
+				borderRadius: "8px",
+				background: "#333",
+				color: "#fff",
+			},
+		});
 
 		try {
 			// 基础表单验证
@@ -145,10 +153,34 @@ export default function LoginPage() {
 			localStorage.setItem("isLoggedIn", "true");
 			localStorage.setItem("userPermissions", JSON.stringify(authenticatedUser.permissions));
 
-			// 登录成功，跳转到管理后台主页
-			router.push("/dashboard");
+			// 显示登录成功提示
+			toast.success(`欢迎回来，${authenticatedUser.nickname}！`, {
+				id: loadingToast,
+				duration: 2000,
+				style: {
+					borderRadius: "8px",
+					background: "#10B981",
+					color: "#fff",
+				},
+			});
+
+			// 延迟跳转，让用户看到成功提示
+			setTimeout(() => {
+				router.push("/dashboard");
+			}, 500);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "登录失败，请重试");
+			const errorMessage = err instanceof Error ? err.message : "登录失败，请重试";
+
+			// 显示错误提示
+			toast.error(errorMessage, {
+				id: loadingToast,
+				duration: 4000,
+				style: {
+					borderRadius: "8px",
+					background: "#EF4444",
+					color: "#fff",
+				},
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -162,15 +194,6 @@ export default function LoginPage() {
 					<h1 className='text-3xl font-bold text-gray-900 mb-2'>Jobbit 管理后台</h1>
 					<p className='text-gray-600'>欢迎登录管理系统</p>
 				</div>
-
-				{/* 错误提示 */}
-				{error && (
-					<div className='bg-red-50 border border-red-200 rounded-lg p-4 mb-6'>
-						<div className='flex items-center'>
-							<div className='text-red-800 text-sm'>⚠️ {error}</div>
-						</div>
-					</div>
-				)}
 
 				{/* 登录表单 */}
 				<form
@@ -249,28 +272,6 @@ export default function LoginPage() {
 						)}
 					</button>
 				</form>
-
-				{/* 底部提示 */}
-				<div className='mt-8 text-center'>
-					<div className='text-sm text-gray-500 mb-4'>
-						<p className='font-medium mb-2'>演示账号：</p>
-						<div className='space-y-1 text-xs'>
-							<p>
-								<span className='font-mono bg-gray-100 px-2 py-1 rounded'>admin</span> - 超级管理员
-							</p>
-							<p>
-								<span className='font-mono bg-gray-100 px-2 py-1 rounded'>hr_manager</span> - HR经理
-							</p>
-							<p>
-								<span className='font-mono bg-gray-100 px-2 py-1 rounded'>hr_staff_001</span> - HR专员
-							</p>
-							<p>
-								<span className='font-mono bg-gray-100 px-2 py-1 rounded'>viewer_001</span> - 只读用户
-							</p>
-						</div>
-						<p className='mt-3 text-gray-400'>密码：任意6位以上字符</p>
-					</div>
-				</div>
 			</div>
 		</div>
 	);
