@@ -1,4 +1,5 @@
 export interface RequestConfig extends RequestInit {
+  url?: string;
   baseURL?: string;
   timeout?: number;
   retry?: number;

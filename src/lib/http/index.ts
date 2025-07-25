@@ -1,5 +1,6 @@
 import { HttpClient } from './HttpClient';
 import { createDefaultInterceptors, createDevelopmentInterceptors } from './interceptors';
+import type { HttpClientConfig } from '../../types/api';
 
 // 创建默认的HTTP客户端实例
 const createHttpClient = () => {
@@ -48,7 +49,7 @@ export * from '../../types/api';
 export const { get, post, put, patch, delete: del, request } = httpClient;
 
 // 创建新实例的工厂函数
-export const createClient = (config?: Parameters<typeof HttpClient>[0]) => {
+export const createClient = (config?: HttpClientConfig) => {
   return new HttpClient(config);
 };
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ChatManager } from '../lib/chat/ChatManager';
-import type { ServerMessage, MessageContent, MessageListener, PresenceListener } from '../types/chat';
+import type { ServerMessage, MessageContent, MessageListener, PresenceListener, AblyTokenRequestResponse } from '../types/chat';
 
 interface User {
   handle: number;
@@ -12,7 +12,7 @@ interface User {
 interface UseChatOptions {
   user?: User;
   chatAPI?: {
-    getAblyTokenRequest(): Promise<{ data: unknown }>;
+    getAblyTokenRequest(): Promise<{ data: AblyTokenRequestResponse }>;
   };
   autoConnect?: boolean;
 }
@@ -56,12 +56,6 @@ export function useChat(options: UseChatOptions = {}) {
     };
   }, [chatManager, chatAPI, updateConnectionStatus]);
 
-  useEffect(() => {
-    if (autoConnect && user && !isConnected && !isInitializing) {
-      initialize(user);
-    }
-  }, [autoConnect, user, isConnected, isInitializing, initialize]);
-
   const initialize = useCallback(async (targetUser: User) => {
     if (isInitializing) return;
     
@@ -76,6 +70,12 @@ export function useChat(options: UseChatOptions = {}) {
       setIsInitializing(false);
     }
   }, [chatManager, updateConnectionStatus, isInitializing]);
+
+  useEffect(() => {
+    if (autoConnect && user && !isConnected && !isInitializing) {
+      initialize(user);
+    }
+  }, [autoConnect, user, isConnected, isInitializing, initialize]);
 
   const createMessage = useCallback((params: {
     chatId: number;

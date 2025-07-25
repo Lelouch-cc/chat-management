@@ -1,5 +1,6 @@
 import type { ServerMessage } from '../types/chat';
-import type { ChatMessageContent, TextContent, ImageContent, FileContent, MessageType } from '../types/chat-api';
+import type { ChatMessageContent, TextContent, ImageContent, FileContent } from '../types/chat-api';
+import { MessageType } from '../types/chat-api';
 
 /**
  * 消息内容解析工具

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { ChatManager } from '../lib/chat/ChatManager';
 import { ChatAPI } from '../services/ChatAPI';
-import type { ServerMessage, MessageListener, PresenceListener } from '../types/chat';
+import type { ServerMessage, MessageListener, PresenceListener, AblyTokenRequestResponse } from '../types/chat';
 
 interface User {
   handle: number;
@@ -28,7 +28,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 interface ChatProviderProps {
   children: ReactNode;
   chatAPI?: {
-    getAblyTokenRequest(): Promise<{ data: unknown }>;
+    getAblyTokenRequest(): Promise<{ data: AblyTokenRequestResponse }>;
   };
 }
 

@@ -6,8 +6,8 @@ import type {
   ResponseInterceptor,
   ErrorInterceptor,
   HttpClientConfig,
-  HttpMethod,
 } from '../../types/api';
+import { HttpMethod } from '../../types/api';
 
 export class HttpClient {
   private baseURL: string;
@@ -65,7 +65,7 @@ export class HttpClient {
     let processedResponse = response;
     
     for (const interceptor of this.responseInterceptors) {
-      processedResponse = await interceptor(processedResponse);
+      processedResponse = await interceptor(processedResponse) as ApiResponse<T>;
     }
     
     return processedResponse;
@@ -122,7 +122,7 @@ export class HttpClient {
       signal: controller.signal,
     };
 
-    let lastError: ApiError;
+    let lastError: ApiError | undefined;
     let attempt = 0;
 
     while (attempt <= retry) {
@@ -183,6 +183,9 @@ export class HttpClient {
       }
     }
 
+    if (!lastError) {
+      lastError = this.createApiError('Unknown error occurred', undefined, config);
+    }
     return await this.applyErrorInterceptors(lastError);
   }
 
