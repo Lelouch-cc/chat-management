@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@douyinfe/semi-ui": "^2.83.0",
     "ably": "^2.10.1",
     "next": "15.4.3",
     "react": "19.1.0",
