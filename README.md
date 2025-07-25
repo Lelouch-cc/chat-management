@@ -28,7 +28,7 @@
 ## 🏗️ 技术栈
 
 - **前端框架**：Next.js 15 (App Router)
-- **UI 框架**：React 18
+- **UI 框架**：React 19
 - **样式方案**：Tailwind CSS 4
 - **类型检查**：TypeScript
 - **状态管理**：React Hooks + LocalStorage
