@@ -146,6 +146,7 @@ export default function LoginPage() {
 
 			// 保存token到localStorage
 			localStorage.setItem("authToken", response.data.token);
+			console.log("🚀 ~ authenticateUser ~ response:", response);
 
 			return user;
 		} catch (error) {

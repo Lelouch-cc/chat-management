@@ -122,7 +122,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 		},
 	],
 	[UserRole.ADMIN]: [
-		// 管理员权限（除了用户管理的删除权限）
+		// 管理员权限（除了用户删除权限）
 		{ module: PermissionModule.DASHBOARD, actions: [PermissionAction.READ, PermissionAction.WRITE, PermissionAction.MANAGE] },
 		{
 			module: PermissionModule.JOBS,
@@ -133,7 +133,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 			actions: [PermissionAction.READ, PermissionAction.WRITE, PermissionAction.DELETE, PermissionAction.MANAGE],
 		},
 		{ module: PermissionModule.CHAT, actions: [PermissionAction.READ, PermissionAction.WRITE, PermissionAction.MANAGE] },
-		{ module: PermissionModule.USERS, actions: [PermissionAction.READ, PermissionAction.WRITE] },
+		{ module: PermissionModule.USERS, actions: [PermissionAction.READ, PermissionAction.WRITE, PermissionAction.MANAGE] },
 		{ module: PermissionModule.SETTINGS, actions: [PermissionAction.READ, PermissionAction.WRITE] },
 	],
 	[UserRole.COMPANY_ADMIN]: [

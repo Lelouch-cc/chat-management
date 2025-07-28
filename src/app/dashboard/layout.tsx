@@ -114,6 +114,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 				module: PermissionModule.USERS,
 			},
 			{
+				name: "公司管理",
+				href: "/dashboard/organizations",
+				icon: "🏢",
+				current: pathname === "/dashboard/organizations",
+				module: PermissionModule.USERS,
+			},
+			{
 				name: "系统设置",
 				href: "/dashboard/settings",
 				icon: "⚙️",
