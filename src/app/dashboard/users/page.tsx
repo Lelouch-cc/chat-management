@@ -44,73 +44,17 @@ export default function UsersPage() {
 		permissions: [],
 	});
 
-	// 模拟用户数据
+	// 初始化空用户列表（实际应该从API获取）
 	useEffect(() => {
-		const mockUsers: User[] = [
-			{
-				id: 1,
-				username: "admin",
-				nickname: "系统管理员",
-				handle: 10001,
-				gender: Gender.MALE,
-				birthday: "1990-01-01",
-				email: "admin@jobbit.com",
-				phone: "13800138000",
-				avatar: "🔧",
-				role: UserRole.SUPER_ADMIN,
-				permissions: ROLE_PERMISSIONS[UserRole.SUPER_ADMIN],
-				status: UserStatus.ACTIVE,
-				createdAt: "2024-01-01T00:00:00Z",
-				updatedAt: "2024-01-15T12:00:00Z",
-				lastLoginAt: "2024-01-15T10:30:00Z",
-			},
-			{
-				id: 2,
-				username: "company_admin",
-				nickname: "陈总监",
-				handle: 10002,
-				gender: Gender.MALE,
-				birthday: "1985-06-15",
-				email: "chen@jobbit.com",
-				phone: "13800138001",
-				avatar: "🏢",
-				role: UserRole.COMPANY_ADMIN,
-				permissions: ROLE_PERMISSIONS[UserRole.COMPANY_ADMIN],
-				status: UserStatus.ACTIVE,
-				createdAt: "2024-01-02T00:00:00Z",
-				updatedAt: "2024-01-15T11:00:00Z",
-				lastLoginAt: "2024-01-15T09:45:00Z",
-			},
-			{
-				id: 3,
-				username: "hr_staff_001",
-				nickname: "李专员",
-				handle: 10003,
-				gender: Gender.MALE,
-				birthday: "1992-03-20",
-				email: "li@jobbit.com",
-				phone: "13800138002",
-				avatar: "👨",
-				role: UserRole.HR_SPECIALIST,
-				permissions: ROLE_PERMISSIONS[UserRole.HR_SPECIALIST],
-				status: UserStatus.ACTIVE,
-				createdAt: "2024-01-03T00:00:00Z",
-				updatedAt: "2024-01-15T08:30:00Z",
-				lastLoginAt: "2024-01-15T08:15:00Z",
-			},
-		];
-		setUsers(mockUsers);
+		// TODO: 调用用户管理API获取用户列表
+		setUsers([]);
 
 		// 设置当前用户（从localStorage获取）
 		try {
 			const userStr = localStorage.getItem("user");
 			if (userStr) {
 				const userData = JSON.parse(userStr);
-				// 找到对应的完整用户信息
-				const fullUser = mockUsers.find((u) => u.username === userData.username);
-				if (fullUser) {
-					setCurrentUser(fullUser);
-				}
+				setCurrentUser(userData);
 			}
 		} catch (error) {
 			console.error("获取当前用户信息失败:", error);
