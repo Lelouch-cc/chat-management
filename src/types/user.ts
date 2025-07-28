@@ -26,9 +26,8 @@ export interface Permission {
 export enum UserRole {
 	SUPER_ADMIN = "super_admin", // 超级管理员
 	ADMIN = "admin", // 管理员
-	HR_MANAGER = "hr_manager", // HR经理
+	COMPANY_ADMIN = "company_admin", // 公司管理员
 	HR_SPECIALIST = "hr_specialist", // HR专员
-	VIEWER = "viewer", // 只读用户
 }
 
 // 性别枚举
@@ -137,13 +136,20 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 		{ module: PermissionModule.USERS, actions: [PermissionAction.READ, PermissionAction.WRITE] },
 		{ module: PermissionModule.SETTINGS, actions: [PermissionAction.READ, PermissionAction.WRITE] },
 	],
-	[UserRole.HR_MANAGER]: [
-		// HR经理权限
+	[UserRole.COMPANY_ADMIN]: [
+		// 公司管理员权限
 		{ module: PermissionModule.DASHBOARD, actions: [PermissionAction.READ] },
-		{ module: PermissionModule.JOBS, actions: [PermissionAction.READ, PermissionAction.WRITE, PermissionAction.DELETE] },
-		{ module: PermissionModule.APPLICATIONS, actions: [PermissionAction.READ, PermissionAction.WRITE, PermissionAction.DELETE] },
+		{
+			module: PermissionModule.JOBS,
+			actions: [PermissionAction.READ, PermissionAction.WRITE, PermissionAction.DELETE, PermissionAction.MANAGE],
+		},
+		{
+			module: PermissionModule.APPLICATIONS,
+			actions: [PermissionAction.READ, PermissionAction.WRITE, PermissionAction.DELETE, PermissionAction.MANAGE],
+		},
 		{ module: PermissionModule.CHAT, actions: [PermissionAction.READ, PermissionAction.WRITE] },
 		{ module: PermissionModule.USERS, actions: [PermissionAction.READ] },
+		{ module: PermissionModule.SETTINGS, actions: [PermissionAction.READ] },
 	],
 	[UserRole.HR_SPECIALIST]: [
 		// HR专员权限
@@ -151,12 +157,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 		{ module: PermissionModule.JOBS, actions: [PermissionAction.READ, PermissionAction.WRITE] },
 		{ module: PermissionModule.APPLICATIONS, actions: [PermissionAction.READ, PermissionAction.WRITE] },
 		{ module: PermissionModule.CHAT, actions: [PermissionAction.READ, PermissionAction.WRITE] },
-	],
-	[UserRole.VIEWER]: [
-		// 只读用户权限
-		{ module: PermissionModule.DASHBOARD, actions: [PermissionAction.READ] },
-		{ module: PermissionModule.JOBS, actions: [PermissionAction.READ] },
-		{ module: PermissionModule.APPLICATIONS, actions: [PermissionAction.READ] },
 	],
 };
 
@@ -187,12 +187,10 @@ export const getRoleText = (role: UserRole): string => {
 			return "超级管理员";
 		case UserRole.ADMIN:
 			return "管理员";
-		case UserRole.HR_MANAGER:
-			return "HR经理";
+		case UserRole.COMPANY_ADMIN:
+			return "公司管理员";
 		case UserRole.HR_SPECIALIST:
 			return "HR专员";
-		case UserRole.VIEWER:
-			return "只读用户";
 		default:
 			return "未知角色";
 	}
